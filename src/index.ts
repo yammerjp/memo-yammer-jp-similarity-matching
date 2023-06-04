@@ -48,6 +48,7 @@ app.get("/time", (c) => {
 });
 
 app.get("/search", async (c) => {
+const ipAddress = c.req.header("CF-Connecting-IP");
   const query = c.req.query("q");
   if (typeof query !== "string") {
     return c.json({ error: "need ?q= query" }, 400);
@@ -81,7 +82,7 @@ app.get("/search", async (c) => {
   return c.json({
     query,
     result,
-    ...(DEBUG ? { vector, matches } : {}),
+    ...(DEBUG ? { vector, matches, ipAddress } : {}),
   });
 });
 
