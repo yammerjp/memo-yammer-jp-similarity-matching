@@ -12,6 +12,7 @@ import { serveStatic } from "hono/cloudflare-workers";
 import { cors } from "hono/cors";
 import { matching } from './matching'
 import { embedding } from './embedding'
+import { fetchArticleDescriptions } from './article'
 
 const app = new Hono<{Bindings: Bindings}>();
 
@@ -95,11 +96,5 @@ const ipAddress = c.req.header("CF-Connecting-IP");
     ...(DEBUG ? { vector, matches, ipAddress } : {}),
   });
 });
-
-async function fetchArticleDescriptions(): Promise<{id: string, url: string, title: string, description: string}[]> {
-  const response = await fetch("https://memo.yammer.jp/posts/index.json");
-  const json = await response.json();
-  return json.items
-}
 
 export default app;
