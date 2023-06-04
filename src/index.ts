@@ -60,11 +60,24 @@ app.get("/search", async (c) => {
     c.env!.PINECONE_API_KEY as string,
     c.env!.PINECONE_API_NAMESPACE as string
   );
-  const result = matches.map((m) => ({
+  const matchingResult = matches.map((m) => ({
     id: m.id,
     url: `https://memo.yammer.jp/posts/${m.id}`,
     similarity: m.score,
   }));
+
+  const articles = await fetchArticleDescriptions()
+
+  const result = matchingResult.map(r => {
+    const article = articles.find(a => a.url === r.url)
+    return ({
+      id: r.id,
+      url: r.url,
+      similarity: r.similarity,
+      ...(article ?? {})
+    })
+  })
+
   return c.json({
     query,
     result,
@@ -151,6 +164,12 @@ async function matching(
     );
   }
   return matches;
+}
+
+async function fetchArticleDescriptions(): Promise<{id: string, url: string, title: string, description: string}[]> {
+  const response = await fetch("https://memo.yammer.jp/posts/index.json");
+  const json = await response.json();
+  return json.items
 }
 
 export default app;
