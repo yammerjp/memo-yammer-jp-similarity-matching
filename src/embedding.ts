@@ -1,3 +1,42 @@
+type EmbeddingData = {
+  object: string;
+  index: number;
+  embedding: number[];
+};
+
+type Usage = {
+  prompt_tokens: number;
+  total_tokens: number;
+};
+
+type EmbeddingResponse = {
+  object: string;
+  data: EmbeddingData[];
+  model: string;
+  usage: Usage;
+};
+
+function isEmbeddingResponse(data: any): data is EmbeddingResponse {
+  return typeof data.object === 'string'
+    && Array.isArray(data.data)
+    && typeof data.model === 'string'
+    && typeof data.usage === 'object'
+    && data.data.every(isEmbeddingData)
+    && isUsage(data.usage);
+}
+
+function isEmbeddingData(data: any): data is EmbeddingData {
+  return typeof data.object === 'string'
+    && typeof data.index === 'number'
+    && Array.isArray(data.embedding)
+    && data.embedding.every((element: any) => typeof element === 'number');
+}
+
+function isUsage(data: any): data is Usage {
+  return typeof data.prompt_tokens === 'number'
+    && typeof data.total_tokens === 'number';
+}
+
 export async function embedding(
   query: string,
   OPENAI_API_KEY: string
@@ -17,21 +56,12 @@ export async function embedding(
     headers: headers,
     body: JSON.stringify(body),
   });
-  const json = await response.json();
-  if (!!json?.error) {
-    return Promise.reject(
-      new Error("failed to be embedding" + JSON.stringify(json.error))
-    );
+  if (!response.ok) {
+    return Promise.reject(new Error("HTTP error " + response.status))
   }
-  const data = json?.data;
-  if (!Array.isArray(data) || data.length < 1) {
-    return Promise.reject(new Error("failed to find data from response"));
+  const data = await response.json()
+  if (!isEmbeddingResponse(data) || data.data.length == 0) {
+      return Promise.reject(new Error("Invalid data structure"));
   }
-  const arr = data[0]?.embedding;
-  if (!Array.isArray(arr) || arr.some((v) => typeof v !== "number")) {
-    return Promise.reject(
-      new Error("failed to extract embedding data from response")
-    );
-  }
-  return arr;
+  return data.data[0].embedding
 }
