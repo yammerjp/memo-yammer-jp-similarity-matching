@@ -1,9 +1,18 @@
+type Bindings = {
+  SIMILARITY_MATCHING_KV: KVNamespace;
+  OPENAI_API_KEY: string;
+  PINECONE_API_HOSTNAME: string;
+  PINECONE_API_KEY: string;
+  PINECONE_API_NAMESPACE: string;
+}
+
 // ref: https://zenn.dev/razokulover/articles/abc5d277c2e6d3
 import { Hono } from "hono";
 import { serveStatic } from "hono/cloudflare-workers";
 import { cors } from "hono/cors";
+import { matching } from './matching'
 
-const app = new Hono();
+const app = new Hono<{Bindings: Bindings}>();
 
 // CORS設定。ChatGPTにプラグイン登録するときにやっておかないと警告が出たので追加した。
 app.use("*", cors());
@@ -54,12 +63,12 @@ const ipAddress = c.req.header("CF-Connecting-IP");
     return c.json({ error: "need ?q= query" }, 400);
   }
   const DEBUG = c.req.query("debug");
-  const vector = await embedding(query, c.env!.OPENAI_API_KEY as string);
+  const vector = await embedding(query, c.env.OPENAI_API_KEY);
   const matches = await matching(
     vector,
-    c.env!.PINECONE_API_HOSTNAME as string,
-    c.env!.PINECONE_API_KEY as string,
-    c.env!.PINECONE_API_NAMESPACE as string
+    c.env.PINECONE_API_HOSTNAME,
+    c.env.PINECONE_API_KEY,
+    c.env.PINECONE_API_NAMESPACE
   );
   const matchingResult = matches.map((m) => ({
     id: m.id,
@@ -122,49 +131,6 @@ async function embedding(
     );
   }
   return arr;
-}
-
-async function matching(
-  vector: number[],
-  PINECONE_API_HOSTNAME: string,
-  PINECONE_API_KEY: string,
-  PINECONE_API_NAMESPACE: string
-): Promise<{ id: string; values: number[]; score: number }[]> {
-  let url = `https://${PINECONE_API_HOSTNAME}/query`;
-  const headers = {
-    "Content-Type": "application/json",
-    "Api-Key": PINECONE_API_KEY,
-    Accept: "application/json",
-  };
-  const body = {
-    includeValues: "false",
-    includeMetadata: "false",
-    topK: 10,
-    namespace: PINECONE_API_NAMESPACE,
-    vector,
-  };
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
-  const json = await response.json();
-  const matches = json?.matches;
-  if (
-    !Array.isArray(matches) ||
-    matches.some(
-      (o) =>
-        typeof o?.id !== "string" ||
-        !Array.isArray(o?.values) ||
-        o?.values.some((n) => typeof n !== "number")
-    )
-  ) {
-    console.error(JSON.stringify(json));
-    return Promise.reject(
-      new Error("failed tto extract matches from response")
-    );
-  }
-  return matches;
 }
 
 async function fetchArticleDescriptions(): Promise<{id: string, url: string, title: string, description: string}[]> {
