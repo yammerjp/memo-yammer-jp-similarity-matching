@@ -1,4 +1,4 @@
-const MAX_REQUESTS_PER_HOUR = 5;
+const MAX_REQUESTS_PER_HOUR = 300;
 
 export async function ratelimit(ipAddress: string, KV: KVNamespace): Promise<Response|null> {
   const key = `rate-limit-ip-address-${ipAddress}`
@@ -13,6 +13,6 @@ export async function ratelimit(ipAddress: string, KV: KVNamespace): Promise<Res
       }
     })
   }
-  await KV.put(key, (count + 1).toString(), { expirationTtl: 61})
+  await KV.put(key, (count + 1).toString(), { expirationTtl: 3600})
   return null
 }

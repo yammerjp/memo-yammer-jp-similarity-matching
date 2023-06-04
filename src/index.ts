@@ -43,16 +43,16 @@ app.get("/", index);
 app.get("/time", time);
 app.get("/search", search);
 
-app.get("/debug", async c => {
-  const keys = await c.env.SIMILARITY_MATCHING_KV.list()
-  const KV: {[key:string]: { value: string|null, expiration: number|undefined}} = {}
-  for(const key of keys.keys) {
-    KV[key.name] = {
-      value: await c.env.SIMILARITY_MATCHING_KV.get(key.name),
-      expiration: key.expiration
-    }
-  }
-  return c.json({KV})
-})
+// app.get("/debug", async c => {
+//   const keys = await c.env.SIMILARITY_MATCHING_KV.list()
+//   const KV: {[key:string]: { value: string|null, expiration: number|undefined}} = {}
+//   for(const key of keys.keys) {
+//     KV[key.name] = {
+//       value: await c.env.SIMILARITY_MATCHING_KV.get(key.name),
+//       expiration: key.expiration
+//     }
+//   }
+//   return c.json({KV})
+// })
 
 export default app;
