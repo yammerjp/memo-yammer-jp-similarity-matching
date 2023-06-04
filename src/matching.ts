@@ -1,9 +1,34 @@
+type Match = {
+  id: string;
+  score: number;
+  values: unknown[];
+};
+
+type ApiResponse = {
+  results: unknown[];
+  matches: Match[];
+  namespace: string;
+};
+
+function isApiResponse(data: any): data is ApiResponse {
+  return Array.isArray(data.results)
+    && Array.isArray(data.matches)
+    && typeof data.namespace === 'string'
+    && data.matches.every(isMatch);
+}
+
+function isMatch(data: any): data is Match {
+  return typeof data.id === 'string'
+    && typeof data.score === 'number'
+    && Array.isArray(data.values);
+}
+
 export async function matching(
   vector: number[],
   PINECONE_API_HOSTNAME: string,
   PINECONE_API_KEY: string,
   PINECONE_API_NAMESPACE: string
-): Promise<{ id: string; values: number[]; score: number }[]> {
+): Promise<Match[]> {
   let url = `https://${PINECONE_API_HOSTNAME}/query`;
   const headers = {
     "Content-Type": "application/json",
@@ -22,22 +47,12 @@ export async function matching(
     headers,
     body: JSON.stringify(body),
   });
-  const json = await response.json();
-  console.log(JSON.stringify(json))
-  const matches = json?.matches;
-  if (
-    !Array.isArray(matches) ||
-    matches.some(
-      (o) =>
-        typeof o?.id !== "string" ||
-        !Array.isArray(o?.values) ||
-        o?.values.some((n) => typeof n !== "number")
-    )
-  ) {
-    console.error(JSON.stringify(json));
-    return Promise.reject(
-      new Error("failed tto extract matches from response")
-    );
+  if (!response.ok) {
+    return Promise.reject(new Error("HTTP error " + response.status))
   }
-  return matches;
+  const data = await response.json();
+  if (!isApiResponse(data)) {
+    return Promise.reject("Invalid data structure")
+  }
+  return data.matches
 }
