@@ -10,9 +10,9 @@ type Bindings = {
 import { Hono } from "hono";
 import { serveStatic } from "hono/cloudflare-workers";
 import { cors } from "hono/cors";
-import { matching } from './matching'
-import { embedding } from './embedding'
-import { fetchArticleDescriptions } from './article'
+import { matching } from './lib/fetching/matching'
+import { embedding } from './lib/fetching/embedding'
+import { fetchArticleDescriptions } from './lib/fetching/article'
 
 const app = new Hono<{Bindings: Bindings}>();
 
