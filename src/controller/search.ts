@@ -2,9 +2,15 @@ import type { Context } from 'hono'
 import { embedding } from '../lib/fetching/embedding'
 import { matching } from '../lib/fetching/matching'
 import { fetchArticleDescriptions } from '../lib/fetching/article'
+import { ratelimit } from '../lib/ratelimit'
 
 export async function search(c: Context) {
-const ipAddress = c.req.header("CF-Connecting-IP");
+  const ipAddress = c.req.header("CF-Connecting-IP");
+  const limit = await ratelimit(ipAddress ?? 'unkwnon', c.env.SIMILARITY_MATCHING_KV)
+  if (!!limit) {
+    return limit
+  }
+
   const query = c.req.query("q");
   if (typeof query !== "string") {
     return c.json({ error: "need ?q= query" }, 400);

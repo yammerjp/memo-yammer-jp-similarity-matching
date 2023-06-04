@@ -1,5 +1,8 @@
 name = "memo-yammer-jp-similarity-matching"
 compatibility_date = "2023-01-01"
+kv_namespaces = [
+  { binding = "SIMILARITY_MATCHING_KV", id = "73aed162e62f48d0b0f91c01046f121e", preview_id = "307f5c88a0a840df84a694458a23b2b2" }
+]
 [site]
 bucket = "./assets"
 # The necessary secrets are:
@@ -10,3 +13,4 @@ bucket = "./assets"
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
 #
 # $ cat .dev.vars | awk -F'=' '{ printf "echo %s | npx wrangler secret put %s\n", $2, $1 }' | bash
+
