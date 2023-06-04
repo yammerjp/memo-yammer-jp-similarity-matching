@@ -2,3 +2,11 @@ name = "memo-yammer-jp-similarity-matching"
 compatibility_date = "2023-01-01"
 [site]
 bucket = "./assets"
+# The necessary secrets are:
+# - OPENAI_API_KEY
+# - PINECONE_API_HOSTNAME
+# - PINECONE_API_KEY
+# - PINECONE_API_NAMESPACE
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+#
+# $ cat .dev.vars | awk -F'=' '{ printf "echo %s | npx wrangler secret put %s\n", $2, $1 }' | bash
